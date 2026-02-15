@@ -19,6 +19,22 @@ const standalonePath = path.join(__dirname, "..", ".next", "standalone");
 
 if (fs.existsSync(standalonePath)) {
   // Production: use standalone server
+  // Next.js standalone expects .next/static and public inside the standalone dir
+  const pkgRoot = path.join(__dirname, "..");
+  const staticSrc = path.join(pkgRoot, ".next", "static");
+  const staticDest = path.join(standalonePath, ".next", "static");
+  const publicSrc = path.join(pkgRoot, "public");
+  const publicDest = path.join(standalonePath, "public");
+
+  // Symlink .next/static → standalone/.next/static
+  if (fs.existsSync(staticSrc) && !fs.existsSync(staticDest)) {
+    fs.symlinkSync(staticSrc, staticDest, "junction");
+  }
+  // Symlink public → standalone/public
+  if (fs.existsSync(publicSrc) && !fs.existsSync(publicDest)) {
+    fs.symlinkSync(publicSrc, publicDest, "junction");
+  }
+
   const serverPath = path.join(standalonePath, "server.js");
   console.log(`Starting Payslip Overview on http://localhost:${PORT}`);
 
