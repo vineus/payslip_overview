@@ -1,0 +1,98 @@
+"use client";
+
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, ReferenceLine, Tooltip,
+} from "recharts";
+import { ChartTooltip } from "./chart-tooltip";
+
+interface PayslipRow {
+  period: string;
+  base_salary: number | null;
+  gross_salary: number | null;
+  net_pay: number | null;
+}
+
+function periodToTimestamp(p: string): number {
+  const [year, month] = p.split("-").map(Number);
+  return new Date(year, month - 1, 1).getTime();
+}
+
+function formatTick(ts: number): string {
+  const d = new Date(ts);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+}
+
+const euroFormatter = (v: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+
+export function SalaryEvolution({ payslips, selectedPeriod, onSelectPeriod }: { payslips: PayslipRow[]; selectedPeriod: string | null; onSelectPeriod: (period: string) => void }) {
+  if (!payslips.length) return null;
+
+  const data = payslips.map((p) => ({
+    period: p.period,
+    ts: periodToTimestamp(p.period),
+    baseSalary: p.base_salary,
+    grossSalary: p.gross_salary,
+    netPay: p.net_pay,
+  }));
+
+  const ticks = data.map((d) => d.ts);
+
+  // Find salary raise events
+  const raises: { ts: number; label: string }[] = [];
+  for (let i = 1; i < payslips.length; i++) {
+    const prev = payslips[i - 1].base_salary;
+    const curr = payslips[i].base_salary;
+    if (prev && curr && curr !== prev) {
+      const pctChange = ((curr - prev) / prev * 100).toFixed(1);
+      raises.push({
+        ts: periodToTimestamp(payslips[i].period),
+        label: `+${pctChange}% raise`,
+      });
+    }
+  }
+
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wide mb-3">Salary Evolution</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data} onClick={(state: any) => { if (state?.activeLabel != null) { const match = data.find((d) => d.ts === state.activeLabel); if (match) onSelectPeriod(match.period); } }} style={{ cursor: "pointer" }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+          <XAxis
+            dataKey="ts"
+            type="number"
+            scale="time"
+            domain={["dataMin", "dataMax"]}
+            ticks={ticks}
+            tickFormatter={formatTick}
+            tick={{ fontSize: 11 }}
+          />
+          <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+          <Tooltip content={<ChartTooltip labelFormatter={(ts) => formatTick(ts as number)} valueFormatter={euroFormatter} />} />
+          <Legend />
+          {selectedPeriod && (
+            <ReferenceLine
+              x={periodToTimestamp(selectedPeriod)}
+              stroke="#facc15"
+              strokeWidth={2}
+              strokeOpacity={0.7}
+            />
+          )}
+          {raises.map((r) => (
+            <ReferenceLine
+              key={r.ts}
+              x={r.ts}
+              stroke="#22c55e"
+              strokeDasharray="4 4"
+              label={{ value: r.label, position: "top", fill: "#22c55e", fontSize: 10 }}
+            />
+          ))}
+          <Line type="monotone" dataKey="baseSalary" name="Base Salary" stroke="#94a3b8" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+          <Line type="monotone" dataKey="grossSalary" name="Gross" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+          <Line type="monotone" dataKey="netPay" name="Net Pay" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
