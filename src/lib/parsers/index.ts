@@ -1,4 +1,7 @@
-import pdfParse from "pdf-parse";
+// Import from lib/pdf-parse directly to avoid pdf-parse's index.js which
+// tries to read a test PDF file at import time, breaking bundlers.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse/lib/pdf-parse.js");
 import { PayslipData } from "../types";
 import { parsePayfit } from "./payfit";
 import { parseSilae } from "./silae";
