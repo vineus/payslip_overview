@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Payslip Overview",
   description: "Upload payslip PDFs and get salary analytics",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({

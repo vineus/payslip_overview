@@ -62,6 +62,9 @@ export default function Home() {
             <p className="text-sm text-zinc-500 mt-1">
               Upload payslip PDFs to see your salary analytics
             </p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1">
+              100% private — everything runs locally, nothing is sent over the internet
+            </p>
           </div>
           <ThemeToggle />
         </header>
