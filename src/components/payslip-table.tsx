@@ -58,7 +58,7 @@ export function PayslipTable({
                 onClick={() => onSelectPeriod(p.period)}
                 className={`cursor-pointer transition-colors ${
                   p.period === selectedPeriod
-                    ? "bg-blue-950/40 border-l-2 border-l-blue-500"
+                    ? "bg-blue-100/60 dark:bg-blue-950/40 border-l-2 border-l-blue-500"
                     : "hover:bg-zinc-50 dark:hover:bg-zinc-900"
                 }`}
               >
