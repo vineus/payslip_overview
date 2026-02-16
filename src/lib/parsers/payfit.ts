@@ -19,7 +19,7 @@ export function parsePayfit(fullText: string, filename: string): PayslipData {
 
   // Period: "EN EUROS - mars 2024"
   let period = "";
-  const monthMatch = text.match(/EN EUROS\s*-\s*(\w+)\s+(\d{4})/i);
+  const monthMatch = text.match(/EN EUROS\s*-\s*([\w\u00C0-\u024F]+)\s+(\d{4})/i);
   if (monthMatch) {
     const monthMap: Record<string, string> = {
       janvier: "01", "février": "02", fevrier: "02", mars: "03",
