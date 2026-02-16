@@ -8,6 +8,9 @@ import { parseSilae } from "./silae";
 
 const PDF_PARSE_TIMEOUT_MS = 30_000;
 
+// Bump this when parser logic changes to flag stale rows
+export const PARSER_VERSION = 2;
+
 export async function extractText(
   pdfBuffer: Buffer
 ): Promise<string> {

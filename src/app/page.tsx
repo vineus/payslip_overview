@@ -22,6 +22,7 @@ export default function Home() {
   const [previous, setPrevious] = useState<PayslipRow | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [allPayslips, setAllPayslips] = useState<PayslipRow[]>([]);
+  const [outdatedCount, setOutdatedCount] = useState(0);
   const fetchData = useCallback(async () => {
     const [statsRes, listRes] = await Promise.all([
       fetch("/api/stats"),
@@ -33,6 +34,7 @@ export default function Home() {
     setLatest(stats.latest);
     setPrevious(stats.previous);
     setAllPayslips(list || []);
+    setOutdatedCount(stats.outdatedCount || 0);
     if (stats.latest && !selectedPeriod) {
       setSelectedPeriod(stats.latest.period as string);
     }
@@ -65,6 +67,13 @@ export default function Home() {
         </header>
 
         <FileUpload onUploadComplete={fetchData} />
+
+        {outdatedCount > 0 && (
+          <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+            {outdatedCount} payslip{outdatedCount > 1 ? "s were" : " was"} parsed with an older version.
+            Re-upload {outdatedCount > 1 ? "them" : "it"} to get improved salary breakdowns.
+          </div>
+        )}
 
         {payslips.length > 0 && (
           <>

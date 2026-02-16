@@ -9,6 +9,7 @@ const DATA_DIR = path.join(
 const DB_PATH = path.join(DATA_DIR, "data.db");
 
 let db: Database | null = null;
+let dbMtime = 0;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS payslips (
@@ -39,11 +40,19 @@ CREATE TABLE IF NOT EXISTS payslips (
   ytd_net_taxable   REAL,
   ytd_gross         REAL,
   ytd_income_tax    REAL,
-  ytd_days_worked   REAL
+  ytd_days_worked   REAL,
+  parser_version    INTEGER
 );
 `;
 
 async function getDb(): Promise<Database> {
+  // Reload if another route handler wrote a newer version to disk
+  if (db && fs.existsSync(DB_PATH)) {
+    const currentMtime = fs.statSync(DB_PATH).mtimeMs;
+    if (currentMtime > dbMtime) {
+      db = null;
+    }
+  }
   if (db) return db;
 
   const SQL = await initSqlJs({
@@ -68,6 +77,7 @@ async function getDb(): Promise<Database> {
   if (fs.existsSync(DB_PATH)) {
     const buffer = fs.readFileSync(DB_PATH);
     db = new SQL.Database(buffer);
+    dbMtime = fs.statSync(DB_PATH).mtimeMs;
   } else {
     db = new SQL.Database();
   }
@@ -122,7 +132,7 @@ async function getDb(): Promise<Database> {
     }
   }
 
-  // Migration: add prime_vacances and leave_adjustment columns
+  // Migration: add columns for newer schema
   const cols2 = db.exec("PRAGMA table_info(payslips)");
   if (cols2.length > 0) {
     const colNames = cols2[0].values.map((row) => row[1] as string);
@@ -131,6 +141,9 @@ async function getDb(): Promise<Database> {
     }
     if (!colNames.includes("leave_adjustment")) {
       db.run("ALTER TABLE payslips ADD COLUMN leave_adjustment REAL");
+    }
+    if (!colNames.includes("parser_version")) {
+      db.run("ALTER TABLE payslips ADD COLUMN parser_version INTEGER");
     }
   }
 
@@ -147,6 +160,7 @@ function saveDb(): void {
     fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
   }
   fs.writeFileSync(DB_PATH, buffer, { mode: 0o600 });
+  dbMtime = fs.statSync(DB_PATH).mtimeMs;
 }
 
 export { getDb, saveDb, DB_PATH, DATA_DIR };

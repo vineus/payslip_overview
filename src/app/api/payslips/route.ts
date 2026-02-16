@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, saveDb } from "@/lib/db";
-import { parsePdf } from "@/lib/parsers";
+import { parsePdf, PARSER_VERSION } from "@/lib/parsers";
 import { PayslipData } from "@/lib/types";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -8,7 +8,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 export async function GET() {
   const db = await getDb();
   const results = db.exec(
-    "SELECT id, period, format, filename, uploaded_at, gross_salary, net_before_tax, income_tax_rate, income_tax, net_pay, net_social, employee_contributions, employer_contributions, meal_vouchers, other_deductions, base_salary, bonus, prime_vacances, leave_adjustment, expense_reimb, cp_n2_balance, cp_n1_balance, cp_n_balance, rtt_balance, ytd_net_taxable, ytd_gross, ytd_income_tax, ytd_days_worked FROM payslips ORDER BY period ASC"
+    "SELECT id, period, format, filename, uploaded_at, gross_salary, net_before_tax, income_tax_rate, income_tax, net_pay, net_social, employee_contributions, employer_contributions, meal_vouchers, other_deductions, base_salary, bonus, prime_vacances, leave_adjustment, expense_reimb, cp_n2_balance, cp_n1_balance, cp_n_balance, rtt_balance, ytd_net_taxable, ytd_gross, ytd_income_tax, ytd_days_worked, parser_version FROM payslips ORDER BY period ASC"
   );
 
   if (!results.length) return NextResponse.json([]);
@@ -71,8 +71,9 @@ export async function POST(request: NextRequest) {
           employee_contributions, employer_contributions, meal_vouchers, other_deductions,
           base_salary, bonus, prime_vacances, leave_adjustment, expense_reimb,
           cp_n2_balance, cp_n1_balance, cp_n_balance, rtt_balance,
-          ytd_net_taxable, ytd_gross, ytd_income_tax, ytd_days_worked
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ytd_net_taxable, ytd_gross, ytd_income_tax, ytd_days_worked,
+          parser_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           data.period, data.format, data.filename, new Date().toISOString(),
           data.gross_salary, data.net_before_tax, data.income_tax_rate, data.income_tax, data.net_pay, data.net_social,
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
           data.base_salary, data.bonus, data.prime_vacances, data.leave_adjustment, data.expense_reimb,
           data.cp_n2_balance, data.cp_n1_balance, data.cp_n_balance, data.rtt_balance,
           data.ytd_net_taxable, data.ytd_gross, data.ytd_income_tax, data.ytd_days_worked,
+          PARSER_VERSION,
         ]
       );
 

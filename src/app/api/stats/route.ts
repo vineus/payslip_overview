@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { PARSER_VERSION } from "@/lib/parsers";
 
 export async function GET() {
   const db = await getDb();
@@ -29,5 +30,10 @@ export async function GET() {
   const latest = payslips.length > 0 ? payslips[payslips.length - 1] : null;
   const previous = payslips.length > 1 ? payslips[payslips.length - 2] : null;
 
-  return NextResponse.json({ payslips, latest, previous });
+  const outdatedRes = db.exec(
+    `SELECT COUNT(*) FROM payslips WHERE parser_version IS NULL OR parser_version < ${PARSER_VERSION}`
+  );
+  const outdatedCount = outdatedRes.length > 0 ? (outdatedRes[0].values[0][0] as number) : 0;
+
+  return NextResponse.json({ payslips, latest, previous, outdatedCount });
 }
