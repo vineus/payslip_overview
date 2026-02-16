@@ -76,11 +76,11 @@ export function parseSilae(fullText: string, filename: string): PayslipData {
     : extractAfter(text, /Net payé\s*([\d][\d\s]*\.\d{2})/);
 
   // Meal vouchers: "Titres-restaurant20.005.0000100.0020.005.0000100.00"
-  // Pattern: label + count + rate + employee_amount + count + rate + employer_amount
+  // Pattern: count(.2f) + rate(.4f) + employee_amount(.2f) + count + rate + employer_amount
   const mealMatch = text.match(
-    /Titres-restaurant\s*([\d][\d\s]*\.\d{2})([\d][\d\s]*\.[\d]+)([\d][\d\s]*\.\d{2})/
+    /Titres-restaurant\s*\d[\d\s]*\.\d{2}\d[\d\s]*\.\d{4}(\d[\d\s]*\.\d{2})/
   );
-  const mealVouchers = mealMatch ? parseNum(mealMatch[3]) : null;
+  const mealVouchers = mealMatch ? parseNum(mealMatch[1]) : null;
 
   // Bonus: "Bonus21 062.00" or "Bonus  21 062.00"
   let bonus: number | null = null;
@@ -178,7 +178,7 @@ export function parseSilae(fullText: string, filename: string): PayslipData {
     employee_contributions: employeeContributions,
     employer_contributions: employerContributions,
     meal_vouchers: mealVouchers,
-    other_deductions: mealVouchers,
+    other_deductions: null,
     base_salary: baseSalary,
     bonus,
     expense_reimb: expenseReimb,

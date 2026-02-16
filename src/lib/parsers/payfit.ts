@@ -90,9 +90,10 @@ export function parsePayfit(fullText: string, filename: string): PayslipData {
   // Net social
   const netSocial = extractAfter(text, /[Mm]ontant net social\s*(\d[\d\s]*[.,]\d{2})/);
 
-  // Meal vouchers
+  // Meal vouchers: "Titres-restaurant18,005,000090,00 90,00"
+  // Pattern: count(.2f) + rate(.4f) + employee_amount(.2f)
   const mealVouchers = extractAfter(
-    text, /[Tt]itres[- ]restaurant\s*[\d\s.,]+\s*[\d\s.,]+\s*(\d[\d\s]*[.,]\d{2})/
+    text, /[Tt]itres[- ]restaurant\s*\d[\d\s]*[.,]\d{2}\d[\d\s]*[.,]\d{4}(\d[\d\s]*[.,]\d{2})/
   );
 
   // Expense reimbursement
