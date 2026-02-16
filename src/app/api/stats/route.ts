@@ -7,7 +7,7 @@ export async function GET() {
   const results = db.exec(
     `SELECT period, gross_salary, net_before_tax, income_tax_rate, income_tax, net_pay, net_social,
             employee_contributions, employer_contributions, meal_vouchers, other_deductions,
-            base_salary, bonus, expense_reimb,
+            base_salary, bonus, prime_vacances, leave_adjustment, expense_reimb,
             cp_n2_balance, cp_n1_balance, cp_n_balance, rtt_balance,
             ytd_net_taxable, ytd_gross, ytd_income_tax, ytd_days_worked
      FROM payslips ORDER BY period ASC`

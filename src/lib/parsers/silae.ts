@@ -83,15 +83,36 @@ export function parseSilae(fullText: string, filename: string): PayslipData {
   const mealVouchers = mealMatch ? parseNum(mealMatch[1]) : null;
 
   // Bonus: "Bonus21 062.00" or "Bonus  21 062.00"
-  let bonus: number | null = null;
   const bonusMatch = text.match(/Bonus\s*([\d][\d\s]*\.\d{2})/);
-  if (bonusMatch) bonus = parseNum(bonusMatch[1]);
-  const primeVacances = extractAfter(text, /Prime de vacances\s*([\d][\d\s]*\.\d{2})/);
-  if (primeVacances) bonus = (bonus || 0) + primeVacances;
-  if (bonus === 0) bonus = null;
+  const bonus = bonusMatch ? parseNum(bonusMatch[1]) : null;
 
-  // Expense reimbursement
-  const expenseReimb = extractAfter(text, /Remboursement[^\n]*([\d][\d\s]*\.\d{2})/);
+  // Prime de vacances (holiday bonus, separate from annual bonus)
+  const primeVacances = extractAfter(text, /Prime de vacances\s*([\d][\d\s]*\.\d{2})/);
+
+  // Leave adjustment: net impact of CP on gross (indemnité - absence)
+  // Format: "Congés payés pris 300525 (1 jour)- 1.00459.9294459.93"
+  //   After ")" → "-" days(2f) rate(4f) amount(2f)
+  // "Indemnité congés payés (1 jour)527.58" → just amount after ")"
+  const cpAbsence = extractAfter(
+    text,
+    /Congés payés pris[^(]*\(\d+\s*jours?\)\s*-\s*[\d][\d\s]*\.\d{2}[\d][\d\s]*\.\d{4}([\d][\d\s]*\.\d{2})/,
+  );
+  const cpIndemnite = extractAfter(
+    text,
+    /Indemnité congés payés\s*\(\d+\s*jours?\)\s*([\d][\d\s]*\.\d{2})/,
+  );
+  let leaveAdjustment: number | null = null;
+  if (cpAbsence !== null || cpIndemnite !== null) {
+    leaveAdjustment = (cpIndemnite || 0) - (cpAbsence || 0);
+    if (Math.abs(leaveAdjustment) < 0.01) leaveAdjustment = null;
+  }
+
+  // Expense reimbursement: "Remboursement..." or "Frais professionnels..."
+  const remboursement = extractAfter(text, /Remboursement[^\n]*([\d][\d\s]*\.\d{2})/);
+  const fraisPro = extractAfter(text, /Frais professionnels\s*([\d][\d\s]*\.\d{2})/);
+  const expenseReimb = remboursement !== null || fraisPro !== null
+    ? (remboursement || 0) + (fraisPro || 0)
+    : null;
 
   // YTD income tax: "cumul PAS annuel5 625.02"
   const ytdIncomeTax = extractAfter(text, /cumul PAS annuel\s*([\d][\d\s]*\.\d{2})/);
@@ -181,6 +202,8 @@ export function parseSilae(fullText: string, filename: string): PayslipData {
     other_deductions: null,
     base_salary: baseSalary,
     bonus,
+    prime_vacances: primeVacances,
+    leave_adjustment: leaveAdjustment,
     expense_reimb: expenseReimb,
     cp_n2_balance: null,
     cp_n1_balance: cpN1Balance,

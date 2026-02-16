@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileUpload } from "@/components/file-upload";
 import { OverviewCards } from "@/components/overview-cards";
+import { VarianceExplanation } from "@/components/variance-explanation";
 import { MonthlyChart } from "@/components/monthly-chart";
 import { SalaryBreakdown } from "@/components/salary-breakdown";
 import { CompositionChart } from "@/components/composition-chart";
@@ -68,6 +69,7 @@ export default function Home() {
         {payslips.length > 0 && (
           <>
             <OverviewCards latest={selectedPayslip || latest} previous={previousPayslip || previous} />
+            <VarianceExplanation current={selectedPayslip || latest} previous={previousPayslip || previous} />
 
             {selectedPeriod && (() => {
               const periods = payslips.map((p) => p.period as string);

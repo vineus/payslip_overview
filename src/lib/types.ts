@@ -22,6 +22,8 @@ export interface PayslipData {
   // Extras
   base_salary: number | null;
   bonus: number | null;
+  prime_vacances: number | null;
+  leave_adjustment: number | null;
   expense_reimb: number | null;
 
   // Leave balances

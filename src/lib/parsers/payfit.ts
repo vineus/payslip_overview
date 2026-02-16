@@ -103,14 +103,37 @@ export function parsePayfit(fullText: string, filename: string): PayslipData {
     text, /Indemnités non soumises\s*\d?\s*(\d[\d\s]*[.,]\d{2})/
   );
 
-  // Other deductions
-  const otherDeductions = extractAfter(
+  // Other deductions: "Autres retenues" total includes meal vouchers — subtract to avoid double-counting
+  const totalRetenues = extractAfter(
     text, /Autres retenues[\s\S]*?[-–]\s*(\d[\d\s]*[.,]\d{2})\s*€/
   );
+  const otherDeductions = totalRetenues !== null && mealVouchers !== null
+    ? totalRetenues - mealVouchers
+    : totalRetenues;
 
   // Bonus
   const bonusMatch = text.match(/Dont\s+(\d[\d\s]*[.,]\d{2})\s*€\s*de primes/);
   const bonus = bonusMatch ? parseNum(bonusMatch[1]) : null;
+
+  // Prime de vacances
+  const primeVacances = extractAfter(text, /[Pp]rime de vacances\s*(\d[\d\s]*[.,]\d{2})/);
+
+  // Leave adjustment: net impact of CP on gross
+  // Format: "Absence Congés Payés N (2 jours)2,00 - 912,70" → days count then amount
+  // "Indemnité Congés Payés N (2 jours)2,00 912,70" → days count then amount
+  const cpAbsencePayfit = extractAfter(
+    text,
+    /Absence Congés Payés[^(]*\(\d+\s*jours?\)\s*\d[\d\s]*[.,]\d{2}\s*[-–]\s*(\d[\d\s]*[.,]\d{2})/,
+  );
+  const cpIndemnitePayfit = extractAfter(
+    text,
+    /Indemnité Congés Payés[^(]*\(\d+\s*jours?\)\s*\d[\d\s]*[.,]\d{2}\s+(\d[\d\s]*[.,]\d{2})/,
+  );
+  let leaveAdjustment: number | null = null;
+  if (cpAbsencePayfit !== null || cpIndemnitePayfit !== null) {
+    leaveAdjustment = (cpIndemnitePayfit || 0) - (cpAbsencePayfit || 0);
+    if (Math.abs(leaveAdjustment) < 0.01) leaveAdjustment = null;
+  }
 
   // Leave balances: "CP N-20,00 jours" "CP N-10,00 jours" "CP N-0,12 jours" "RTT0,68 jours"
   const cpN2Balance = extractAfter(text, /CP N-2\s*(\d[\d\s,]*)\s*jours/);
@@ -145,6 +168,8 @@ export function parsePayfit(fullText: string, filename: string): PayslipData {
     other_deductions: otherDeductions,
     base_salary: baseSalary,
     bonus: bonus && bonus > 0 ? bonus : null,
+    prime_vacances: primeVacances,
+    leave_adjustment: leaveAdjustment,
     expense_reimb: expenseReimb,
     cp_n2_balance: cpN2Balance,
     cp_n1_balance: cpN1Balance,

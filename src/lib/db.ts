@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS payslips (
   other_deductions        REAL,
   base_salary     REAL,
   bonus           REAL,
+  prime_vacances  REAL,
+  leave_adjustment REAL,
   expense_reimb   REAL,
   cp_n2_balance   REAL,
   cp_n1_balance   REAL,
@@ -117,6 +119,18 @@ async function getDb(): Promise<Database> {
         FROM payslips`);
       db.run("DROP TABLE payslips");
       db.run("ALTER TABLE payslips_new RENAME TO payslips");
+    }
+  }
+
+  // Migration: add prime_vacances and leave_adjustment columns
+  const cols2 = db.exec("PRAGMA table_info(payslips)");
+  if (cols2.length > 0) {
+    const colNames = cols2[0].values.map((row) => row[1] as string);
+    if (!colNames.includes("prime_vacances")) {
+      db.run("ALTER TABLE payslips ADD COLUMN prime_vacances REAL");
+    }
+    if (!colNames.includes("leave_adjustment")) {
+      db.run("ALTER TABLE payslips ADD COLUMN leave_adjustment REAL");
     }
   }
 
