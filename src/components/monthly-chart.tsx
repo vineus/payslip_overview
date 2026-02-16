@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Cell, Tooltip,
 } from "recharts";
 import { ChartTooltip } from "./chart-tooltip";
+import { StackToggle } from "./cumulative-toggle";
+import { InteractiveLegend } from "./interactive-legend";
 
 interface PayslipRow {
   period: string;
@@ -35,7 +38,18 @@ export function MonthlyChart({
   selectedPeriod: string | null;
   onSelectPeriod: (period: string) => void;
 }) {
+  const [stacked, setStacked] = useState(true);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+
   if (!payslips.length) return null;
+
+  const toggleSeries = (key: string) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
 
   const data = payslips.map((p) => ({
     period: p.period,
@@ -50,13 +64,18 @@ export function MonthlyChart({
   const domainMin = data[0].ts - halfMonth;
   const domainMax = data[data.length - 1].ts + halfMonth;
 
+  const h = (key: string) => hidden.has(key);
+
   return (
     <div>
-      <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wide mb-3">Monthly Breakdown</h3>
+      <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wide">Monthly Breakdown</h3>
+        <StackToggle enabled={stacked} onChange={setStacked} />
+      </div>
       <ResponsiveContainer width="100%" height={300}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
           <XAxis
             dataKey="ts"
             type="number"
@@ -67,9 +86,9 @@ export function MonthlyChart({
             tick={{ fontSize: 11 }}
           />
           <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-          <Tooltip content={<ChartTooltip labelFormatter={(ts) => formatTick(ts as number)} valueFormatter={euroFormatter} />} />
-          <Legend />
-          <Bar dataKey="netPay" name="Net Pay" stackId="a" radius={[0, 0, 0, 0]} onClick={(d: any) => onSelectPeriod(d.period)} cursor="pointer">
+          <Tooltip content={<ChartTooltip labelFormatter={(ts) => formatTick(ts as number)} valueFormatter={euroFormatter} showTotal={stacked} />} />
+          <Legend content={<InteractiveLegend hidden={hidden} onToggle={toggleSeries} />} />
+          <Bar dataKey="netPay" name="Net Pay" stackId={stacked ? "a" : undefined} fill="#60a5fa" radius={[0, 0, 0, 0]} onClick={(d: any) => onSelectPeriod(d.period)} cursor="pointer" hide={h("netPay")}>
             {data.map((entry) => (
               <Cell
                 key={entry.period}
@@ -77,8 +96,8 @@ export function MonthlyChart({
               />
             ))}
           </Bar>
-          <Bar dataKey="tax" name="Income Tax" stackId="a" fill="#f97316" onClick={(d: any) => onSelectPeriod(d.period)} cursor="pointer" />
-          <Bar dataKey="contributions" name="Contributions" stackId="a" fill="#a78bfa" radius={[4, 4, 0, 0]} onClick={(d: any) => onSelectPeriod(d.period)} cursor="pointer" />
+          <Bar dataKey="tax" name="Income Tax" stackId={stacked ? "a" : undefined} fill="#f97316" onClick={(d: any) => onSelectPeriod(d.period)} cursor="pointer" hide={h("tax")} />
+          <Bar dataKey="contributions" name="Contributions" stackId={stacked ? "a" : undefined} fill="#a78bfa" radius={[4, 4, 0, 0]} onClick={(d: any) => onSelectPeriod(d.period)} cursor="pointer" hide={h("contributions")} />
         </BarChart>
       </ResponsiveContainer>
     </div>

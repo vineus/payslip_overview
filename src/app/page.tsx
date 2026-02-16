@@ -11,6 +11,7 @@ import { LeaveEvolution } from "@/components/leave-evolution";
 import { LeaveBalances } from "@/components/leave-balances";
 import { YtdSummary } from "@/components/ytd-summary";
 import { PayslipTable } from "@/components/payslip-table";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type PayslipRow = Record<string, unknown>;
 
@@ -20,7 +21,6 @@ export default function Home() {
   const [previous, setPrevious] = useState<PayslipRow | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [allPayslips, setAllPayslips] = useState<PayslipRow[]>([]);
-
   const fetchData = useCallback(async () => {
     const [statsRes, listRes] = await Promise.all([
       fetch("/api/stats"),
@@ -53,11 +53,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950">
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        <header>
-          <h1 className="text-2xl font-bold">Payslip Overview</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Upload payslip PDFs to see your salary analytics
-          </p>
+        <header className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Payslip Overview</h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              Upload payslip PDFs to see your salary analytics
+            </p>
+          </div>
+          <ThemeToggle />
         </header>
 
         <FileUpload onUploadComplete={fetchData} />
@@ -80,14 +83,14 @@ export default function Home() {
                   <button
                     onClick={() => currentIdx > 0 && setSelectedPeriod(periods[currentIdx - 1])}
                     disabled={currentIdx <= 0}
-                    className="px-2 py-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-2 py-1 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     &larr;
                   </button>
                   <select
                     value={selectedPeriod}
                     onChange={(e) => setSelectedPeriod(e.target.value)}
-                    className="bg-zinc-900 border border-zinc-700 rounded px-3 py-1.5 text-sm font-semibold appearance-none cursor-pointer hover:border-zinc-500 focus:outline-none focus:border-blue-500"
+                    className="bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded px-3 py-1.5 text-sm font-semibold appearance-none cursor-pointer hover:border-zinc-500 focus:outline-none focus:border-blue-500"
                   >
                     {periods.map((p) => (
                       <option key={p} value={p}>{formatPeriodLong(p)}</option>
@@ -96,7 +99,7 @@ export default function Home() {
                   <button
                     onClick={() => currentIdx < periods.length - 1 && setSelectedPeriod(periods[currentIdx + 1])}
                     disabled={currentIdx >= periods.length - 1}
-                    className="px-2 py-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-2 py-1 rounded text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     &rarr;
                   </button>
