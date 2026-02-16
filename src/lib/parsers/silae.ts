@@ -25,7 +25,7 @@ export function parseSilae(fullText: string, filename: string): PayslipData {
 
   // Period: "Période : Juin 2024"
   let period = "";
-  const periodMatch = text.match(/Période\s*:\s*(\w+)\s+(\d{4})/i);
+  const periodMatch = text.match(/Période\s*:\s*([\w\u00C0-\u024F]+)\s+(\d{4})/i);
   if (periodMatch) {
     const monthNum = MONTH_MAP[periodMatch[1].toLowerCase()] || "01";
     period = `${periodMatch[2]}-${monthNum}`;
