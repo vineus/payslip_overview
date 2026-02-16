@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Upload, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Upload, CheckCircle, XCircle, X, Loader2 } from "lucide-react";
 
 interface UploadResult {
   filename: string;
@@ -36,6 +36,13 @@ export function FileUpload({ onUploadComplete }: { onUploadComplete: () => void 
     },
     [onUploadComplete]
   );
+
+  // Auto-dismiss results after 5 seconds
+  useEffect(() => {
+    if (results.length === 0) return;
+    const timer = setTimeout(() => setResults([]), 5000);
+    return () => clearTimeout(timer);
+  }, [results]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -83,7 +90,13 @@ export function FileUpload({ onUploadComplete }: { onUploadComplete: () => void 
       </div>
 
       {results.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-1 relative">
+          <button
+            onClick={() => setResults([])}
+            className="absolute -top-1 -right-1 p-0.5 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
           {results.map((r, i) => (
             <div
               key={i}
