@@ -1,6 +1,6 @@
 {
   "name": "@vineus/payslip-overview",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Upload payslip PDFs and get salary analytics dashboard",
   "author": "Vincent de Lagabbe",
   "license": "MIT",
